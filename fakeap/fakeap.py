@@ -23,9 +23,25 @@ management frames of the following types:
 import logging
 import signal
 import pyev
+import time
 
 from scapy.layers import dot11
+import PyLorcon2
 
+
+class PacketSender(object):
+    def __init__(self, iface):
+        self.iface = iface
+        self.ctx = PyLorcon2.Context(self.iface)
+        self.ctx.open_injmon()
+
+
+    def send(self, packet):
+        self.ctx.send_bytes(str(packet))
+
+
+    def close():
+        self.ctx.close()
 
 
 class FakeAP(object):
@@ -37,6 +53,10 @@ class FakeAP(object):
         self.channel = channel
         self.beacon_interval_sec = beacon_interval_sec
         self.packet_callback = packet_callback
+
+        self.start_time_secs = time.time()
+        self.sc = 0
+        self.sender = PacketSender(self.iface)
 
         self.beacon_packet = dot11.Dot11(addr1='ff:ff:ff:ff:ff:ff',       \
                                          addr2=self.bssid,                \
@@ -69,7 +89,27 @@ class FakeAP(object):
 
 
     def do_beacon(self):
-        logging.debug("[%s] BEACON: %s" % (self.essid, self.beacon_packet.summary()))
+        self.prepare_next_packet()
+        self.send_packet()
+        logging.info("[%s] BEACON: %s" % (self.essid, self.beacon_packet.summary()))
+    
+
+    def prepare_next_packet(self):
+        self.beacon_packet.SC = self.next_sequence_ctrl()
+
+        # timestamp is the number of milliseconds the AP has been active
+        self.beacon_packet[dot11.Dot11Beacon].timestamp = \
+                        (time.time() - self.start_time_secs) * 1000
+
+
+    def send_packet(self):
+        self.sender.send(self.beacon_packet)
+
+
+    # get next sequence number
+    def next_sequence_ctrl(self):
+        self.sc = (self.sc + 0x10) % 0xffff
+        return self.sc
 
 
     # execute the command

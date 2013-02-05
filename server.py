@@ -82,7 +82,7 @@ def server(options):
 
 
     # initialize the FakeAP
-    fakeAP = FakeAP(config['ESSID'], config['BSSID'], config['channel'], config['beacon_interval_sec'], packet_callback)
+    fakeAP = FakeAP(config['interface'], config['ESSID'], config['BSSID'], config['channel'], config['beacon_interval_sec'], packet_callback)
 
     # start the FakeAP
     fakeAP.start()

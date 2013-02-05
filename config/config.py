@@ -13,7 +13,7 @@ config = {
 
     "interface": "mon0",
     "ESSID": "LOVEYOULONGTI.ME",
-    "BSSID": "aa:bb:cc:dd:ee:ff:00",
+    "BSSID": "00:1e:ab:20:4b:1d",
     "channel": 1,
     "beacon_interval_sec": 1
 }
