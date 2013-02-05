@@ -22,11 +22,17 @@ management frames of the following types:
 
 import logging
 import signal
+from threading import Thread
 import pyev
 import time
 
 from scapy.layers import dot11
+from scapy.all import sniff, Dot11
 import PyLorcon2
+
+
+MANAGEMENT_FRAME_TYPE = 0x0
+MANAGEMENT_FRAME_SUBTYPES = (0x0, 0x2, 0x4)
 
 
 class PacketSender(object):
@@ -40,7 +46,7 @@ class PacketSender(object):
         self.ctx.send_bytes(str(packet))
 
 
-    def close():
+    def close(self):
         self.ctx.close()
 
 
@@ -87,11 +93,30 @@ class FakeAP(object):
 
         self.loop.data = [sigterm_watcher, sigint_watcher]
 
+        self.sniff_thread = Thread(target=self.sniff,
+                                  kwargs=dict(),
+                                  name='sniff-thread')
+        self.sniff_thread.setDaemon(True)
+
+
+    def sniff(self):
+        # start sniffing for probe requests
+        logging.info("Sniff starting...")
+        sniff(iface=self.iface, prn=self.sniffCallback)
+
+
+    def sniffCallback(self, p):
+        if p.haslayer(Dot11):
+            if p.type == MANAGEMENT_FRAME_TYPE and \
+                            p.subtype in MANAGEMENT_FRAME_SUBTYPES:
+                if True or p.addr1 == self.bssid:
+                    self.packet_callback(p)
+
 
     def do_beacon(self):
         self.prepare_next_packet()
         self.send_packet()
-        logging.info("[%s] BEACON: %s" % (self.essid, self.beacon_packet.summary()))
+        logging.debug("[%s] BEACON: %s" % (self.essid, self.beacon_packet.summary()))
     
 
     def prepare_next_packet(self):
@@ -166,6 +191,8 @@ class FakeAP(object):
 
     def start(self):
         logging.info("Event loop start")
+        self.sniff_thread.start()
+        logging.info("Sniffer started")
         self.set_interval()
         self.loop.start()
 
@@ -173,6 +200,7 @@ class FakeAP(object):
     def halt(self):
         logging.info("Halting...")
         self.loop.stop(pyev.EVBREAK_ALL)
+        self.sender.close()
 
 
 

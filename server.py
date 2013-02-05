@@ -72,12 +72,12 @@ def server(options):
         if options.log_stderr:
             logging.basicConfig(level=logging.INFO,
                                 stream=sys.stderr,
-                                format='%(asctime)s %(message)s',
+                                format='%(asctime)s [%(threadName)s] %(message)s',
                                 datefmt='%Y-%m-%d %H:%M:%S')
         else:
             logging.basicConfig(level=logging.INFO,
                                 filename=config['logfile'],
-                                format='%(asctime)s %(message)s',
+                                format='%(asctime)s [%(threadName)s] %(message)s',
                                 datefmt='%Y-%m-%d %H:%M:%S')
 
 

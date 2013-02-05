@@ -15,6 +15,6 @@ config = {
     "ESSID": "LOVEYOULONGTI.ME",
     "BSSID": "00:1e:ab:20:4b:1d",
     "channel": 1,
-    "beacon_interval_sec": 1
+    "beacon_interval_sec": 0.1
 }
 
